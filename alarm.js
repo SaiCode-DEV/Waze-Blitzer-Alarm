@@ -129,6 +129,9 @@ async function main() {
       headers: form.getHeaders(),
     });
     console.log(`${time()} | Sent alert ${alert.id} to discord!`);
+
+    //delete the image
+    fs.unlinkSync(alert.image);
   }
 
   console.table(data);
