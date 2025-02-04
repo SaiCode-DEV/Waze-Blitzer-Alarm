@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env alarm.js"
+    "start": "node --env-file=.env alarm.js",
+    "portainer": "node --env-file=stack.env alarm.js"
   },
   "license": "MIT",
   "dependencies": {
