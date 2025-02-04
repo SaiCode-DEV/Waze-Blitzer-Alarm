@@ -2,22 +2,12 @@ import fs from "fs";
 import fetch from "node-fetch";
 import formData from "form-data";
 
-const  BOUNDS = {
-  top: 49.03360094218811,
-  bottom: 48.96663726218302,
-  left: 12.000735049845973,
-  right: 12.152449374797143,
-};
-
-/*
-Test whole of Regensburg
-const BOUNDS = {
-  top: 49.079626571153625,
-  bottom: 48.945733047592306,
-  left: 11.878446875117428,
-  right: 12.300733862422117,
-}; 
-*/
+const BOUNDS = JSON.parse(process.env.BOUNDS || "null");
+const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
+if (!BOUNDS) throw new Error("BOUNDS not set");
+if (!MAPBOX_TOKEN) throw new Error("MAPBOX_TOKEN not set");
+if (!WEBHOOK_URL) throw new Error("WEBHOOK_URL not set");
 
 const MARKER = "https://i.imgur.com/BnBtfv1.png";
 
@@ -87,7 +77,7 @@ async function main() {
       MARKER
     )}(${alert.x},${alert.y + 0.0005})/${alert.x},${
       alert.y
-    },15/1280x720?access_token=${process.env.MAPBOX_TOKEN}&logo=false&attribution=false`;
+    },15/1280x720?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`;
 
     console.debug(url);
     let response = await fetch(url);
@@ -123,7 +113,7 @@ async function main() {
       filename: `${alert.id}.png`,
     });
 
-    let response = await fetch(process.env.WEBHOOK_URL, {
+    let response = await fetch(WEBHOOK_URL, {
       method: "POST",
       body: form,
       headers: form.getHeaders(),
