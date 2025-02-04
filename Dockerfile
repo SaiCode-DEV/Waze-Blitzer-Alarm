@@ -9,4 +9,4 @@ RUN mkdir img
 
 RUN npm install
 
-CMD ["node", "alarm.js"]
+CMD ["npm", "start"]
