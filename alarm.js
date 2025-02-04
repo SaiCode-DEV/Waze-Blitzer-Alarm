@@ -52,7 +52,7 @@ async function main() {
       id: alert.uuid,
       x: alert.location.x,
       y: alert.location.y,
-      nThumbsUp: alert.nThumbsUp,
+      nThumbsUp: alert.nThumbsUp || 0,
       reportBy: alert.reportBy,
       street: alert.street,
       since: alert.pubMillis,
@@ -133,8 +133,15 @@ async function main() {
     //delete the image
     fs.unlinkSync(alert.image);
   }
-
-  console.table(data);
+  //write to the console, modify since to be more readable
+  console.table(
+    newAlerts.map((alert) => {
+      alert.since = new Date(alert.since).toLocaleString("de-DE", {
+        timeZone: "Europe/Berlin",
+      });
+      return alert;
+    })
+  );
   //write the data to the file
   fs.writeFileSync("data.json", JSON.stringify(data));
 }
