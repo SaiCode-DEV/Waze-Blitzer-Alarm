@@ -10,4 +10,4 @@ RUN mkdir img
 
 RUN npm install
 
-CMD ["npm", "portainer"]
+CMD ["npm", "run", "portainer"]
