@@ -11,6 +11,22 @@ if (!WEBHOOK_URL) throw new Error("WEBHOOK_URL not set");
 
 const MARKER = "https://i.imgur.com/BnBtfv1.png";
 
+// Function to calculate distance between two points using Haversine formula (in meters)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+}
+
 async function main() {
   let response = await fetch(
     `https://www.waze.com/live-map/api/georss?top=${BOUNDS.top}&bottom=${BOUNDS.bottom}&left=${BOUNDS.left}&right=${BOUNDS.right}&env=row&types=alerts`,
@@ -48,15 +64,40 @@ async function main() {
       since: alert.pubMillis,
     };
   });
-
   //read the old data and check if there are new alerts
   var oldData = [];
-  if (fs.existsSync("data.json")) {
-    oldData = JSON.parse(fs.readFileSync("data.json"));
+  if (fs.existsSync("data/data.json")) {
+    oldData = JSON.parse(fs.readFileSync("data/data.json"));
   }
+  
+  // First filter by unique IDs
   let newAlerts = data.filter(
     (alert) => !oldData.some((oldAlert) => oldAlert.id == alert.id)
   );
+  
+  // Then filter out alerts that are too close to previous ones (within 200m and 3 hours)
+  const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+  const DISTANCE_THRESHOLD = 200; // 200 meters
+  const currentTime = new Date().getTime();
+  
+  newAlerts = newAlerts.filter(alert => {
+    // Check if this alert is too close in location and time to any old alert
+    return !oldData.some(oldAlert => {
+      // Check time difference (within 3 hours)
+      const timeDiff = currentTime - oldAlert.since;
+      if (timeDiff > THREE_HOURS_MS) return false; // Alert is older than 3 hours
+      
+      // Check distance (within 200m)
+      const distance = calculateDistance(alert.y, alert.x, oldAlert.y, oldAlert.x);
+      
+      // If within time and distance threshold, we should skip this alert
+      if (distance <= DISTANCE_THRESHOLD) {
+        console.log(`${time()} | Skipping alert ${alert.id} - too close to existing alert ${oldAlert.id} (${Math.round(distance)}m, ${Math.round(timeDiff/60000)}min ago)`);
+        return true;
+      }
+      return false;
+    });
+  });
 
   //if there are no new alerts, exit
   if (newAlerts.length == 0) {
@@ -133,7 +174,7 @@ async function main() {
     })
   );
   //write the data to the file
-  fs.writeFileSync("data.json", JSON.stringify(data));
+  fs.writeFileSync("data/data.json", JSON.stringify(data));
 }
 
 const time = () => new Date().toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "medium" });

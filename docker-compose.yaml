@@ -2,3 +2,8 @@ version: '3'
 services:
   alarm:
     build: .
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - stack.env
