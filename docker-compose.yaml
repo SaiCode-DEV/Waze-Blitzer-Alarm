@@ -1,7 +1,7 @@
 version: '3'
 services:
   alarm:
-    build: .
+    image: ghcr.io/saicode-dev/waze-blitzer-alarm:latest
     restart: unless-stopped
     volumes:
       - ./data:/app/data
